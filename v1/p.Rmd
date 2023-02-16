@@ -1,0 +1,330 @@
+---
+title             : "Hierarchical-Model Insights For Planning and Interpreting Individidual-Difference Studies of Cognitive Abilities"
+shorttitle        : "Hierarchical-Model Insights"
+
+author: 
+  - name: Jeffrey N. Rouder
+    affiliation: "1"
+    corresponding: yes    # Define only one corresponding author
+    email: jrouder@uci.edu
+    address: Department of Cognitive Science, University of California, Irvine, CA, 92697
+  - name: Mahbod Mehrvarz
+    affiliation: "1"
+
+affiliation       :
+  - id: 1
+    institution: University of California, Irvine
+
+
+authornote: |
+  Version 1, February, 2023.
+  
+  Author Contributions: JNR wrote the paper, analyzed the Stroop and flanker effect data, and provided the mathematical derivations.  MM analyzed the visual illusion data and overall speed measures.  Both authors jointly edited the paper.  
+  
+  Open Science Practices: All data, analyses, and code for drawing the figures and typesetting the table are available at github.com/specl/ctx-reliability.  
+  
+  JNR was supported by NSF 2126976.
+
+abstract          :  "Although individual-difference studies have been invaluable in several domains of psychology, there has been less success in cognitive domains using experimental tasks.  The problem is often called one of reliability---individual differences in cognitive tasks, especially cognitive-control tasks, seem too unreliable (e.g., Enkavi, et al., PNAS, 2019).  Yet, this reliability-crisis story is incomplete as reliable coefficients reflect both the nature of the task and the number of replicate trials in an experiment.   In this paper, we use the language of hierarchical models to define a novel reliability measure---a signal noise ratio---that reflects the nature of tasks alone without recourse to sample sizes.  This measure can be obtained with a simple calculation using straightforward summary statistics.  It may be used to plan appropriately powered studies as well as understand the cause of low correlations across tasks.  Moreover, it may be used to assess various proposed solutions to the reliability crisis such as gamification and the avoidance of different scores."
+
+  
+keywords          : "individual differences, reliability, cognitive control, cognitive abilities, hierarchical models"
+
+bibliography      : ["zlab.bib"]
+figsintext        : no
+figurelist        : no
+tablelist         : no
+footnotelist      : no
+lineno            : no
+
+
+class             : "man"
+header-includes:
+   - \usepackage{bm}
+   - \usepackage{pcl}
+   - \usepackage{amsmath}
+   - \usepackage{setspace}
+output            : papaja::apa6_pdf
+
+csl               : apa6.csl
+---
+
+```{r}
+knitr::opts_chunk$set(
+  echo = FALSE, 
+  message=FALSE, 
+  warning = FALSE)
+```  
+
+```{r}
+library(papaja)
+set.seed(345892349)
+runRM=F
+runIllusion=F
+needTab = F
+source('aux.R')
+```
+  
+
+Over the last several decades, it has become increasingly popular to study individual differences in common cognitive tasks.  The goal of studying these differences is to discover the underlying structure in particular domains.  One example is cognitive control.  By understanding how individuals' performance covaries across cognitive-control tasks, it is perhaps possible to recover an underlying structure.  The classic example in cognitive control comes from @Miyake.etal.2000, who used latent-variable models to decompose individual differences in cognitive-control tasks into three factors (inhibition, shifting, updating).  Others, however, using the same approach, conclude otherwise.  @Engle.etal.1999 and @Kane.etal.2001 argued for a more unified concept of cognitive control and attention that affects individual differences across a wide range of tasks.  @Rey-Mermet.etal.2018 argue for a disunified approach where cognitive control in one task does not generalize to others.  These contradictory claims with similar methods are cause for some concern.
+
+In the individual-differences approach, participants complete a battery of tasks such as the Stroop task [@Stroop.1935], the flanker task [@Eriksen.Eriksen.1974], the antisaccade task [@Kane.etal.2001], the N-back memory task [@Cohen.etal.1994], among many others.  On each of these tasks, a task score is computed per individual.  For example, in the Stroop task, the task score for each individual is the mean response time in the congruent condition subtracted from the mean response time in the incongruent condition, or the sample effect.  The matrix of scores per individual across the tasks serves as input (see Figure \ref{fig:usual}) to structural-equation modeling.  Next, the covariation of the tasks may be computed, and this covariation is decomposed into latent variables [@Bollen.1989;@Skrondal.Rabe-Hesketh.2004].  The relations among these latent variables purportedly reveal the underlying structure of cognitive processes. 
+
+```{r usual,fig.cap="Usual analysis: The raw data are used to tabulated into individual scores (A). The covariation among these individual scores may be computed (B).  These covariances are decomposed with structural equation models (C).", out.width="5in"}
+knitr::include_graphics("dataAnalysis.jpg",dpi=100)
+```
+
+Psychologists have long known that the ability to study covariation across tasks depends on the *reliability* of each task [@Spearman.1904a].  If tasks have low reliability, then correlations are attenuated and it is difficult to extract the underlying latent structure of covariation.  Indeed, most traditional task-based effects, say Stroop tasks or flanker tasks, are characterized by low reliability [@Enkavi.etal.2019;@Hedge.etal.2018].   We, along with others, worry that there is a *reliability crisis* in the field of individual differences with traditional cognitive tasks.  There are two signatures to this crisis:  First, in the domain of cognitive control,  several tasks that purportedly measure the same construct do not correlate well.  For example, the correlation between flanker and Stroop effects in large studies is often near .1 and rarely greater than .25 [@Enkavi.etal.2019;@Rey-Mermet.etal.2018;@Rouder.etal.inpreparation].  These results indicate that even if these tasks are truly correlated, the correlation is not recoverable from low-task reliability.  Second, extant latent-variable decompositions in cognitive-control domains seem unstable.  This instability is showcased by @Karr.etal.2018 who show that published latent-variable analyses with cognitive-control tasks are often unreplicable.
+
+There are several recent proposed solutions to the reliability crisis including avoiding difference scores [@Draheim.etal.2019], using diffusion models for combining speed and choice variables [@Haines.etal.2020;@Lerche.etal.2020], and making video-game versions of tasks [@Kucina.etal.2022;@Deveau.etal.2015].  An additional proposal---one that we have advocated---is to use hierarchical models to appropriately partition variability into distinct strata.  The hope is that by modeling variability and covariability due to trials, conditions, tasks, and people, researchers can improve their recovery of correlations across tasks even in low-reliability environments [@Haines.etal.2020;@Rouder.Haaf.2019;@Matzke.etal.2017].  Indeed, there is good news on this front---hierarchical models outperform their nonhierarchical competitors and, perhaps more importantly, provide reasonable estimates of uncertainty [@Rouder.etal.inpreparation].  Even so, they provide no magic solution.  It remains difficult to recover underlying latent structure in low-reliability environments.
+
+Although we recommend hierarchical approaches in relatively simple cases [e.g., @Rouder.Haaf.2019], they are not used in most applications. The reason is clear.  It is not straightforward to incorporate both trial noise and structural-equation decompositions of covariance.  There are no software packages that can conveniently combine trial noise and latent structures in the massively repeated designs that experimentalists use.  To account for trial noise, it would be necessary to construct a separate node for each trial rather than start with person-by-task scores.  While we think such hierarchical trial-noise + SEM decomposition models are tractable in principle, to our knowledge they have not been developed in the experimental-psychology context.
+
+Our goal is not to promote tools that do not exist.  Instead, we show here that the *language* of hierarchical models, along with a few quick calculations, can provide a valuable tool in planning and interpreting individual-difference studies.  In many ways, our goal is similar to @Spearman.1904a, who used the language of hierarchical models to develop his famous formula for disattenuating correlations.  In some sense, our argument is an update on Spearman's with new features including variable trial sizes and a novel effect-size measure for reliability in the form of a signal-to-noise ratio.
+
+To see the need for a new language, we need to look no further than the concept of *reliability*.  To show the problem, let's suppose two labs are studying the test-retest reliability of the Stroop effect with the same paradigm and materials.  Each lab decides to run 200 people on Day 1 and then again on Day 2, perhaps a week later.  Each lab computes each person's Stroop effect score by taking the difference between incongruent and congruent sample means, and each lab correlates these scores across Day 1 and Day 2 to estimate test-retest reliability.  The only difference is that one lab decides to run 20 trials per person per day per condition; the other lab decides to run 200 trials per person per day per condition.  It should be obvious that the procedure in the first lab yields a much lower test-retest reliability coefficient than the second lab because of the differences in the number of trials.  Hence, the reliability coefficient is not a property of the task itself.  It is not helpful to make statements such as "The Stroop task has low reliability,"  because reliability is critically intertwined with the number of trials per person per condition (henceforth called *trial size*).
+
+This fact raises problems.  Is the reliability crisis a crisis of trial size?  What are appropriate trial sizes for localizing covariation across studies?  Is there a measure of reliability that reflects the properties of the task without reference to trial size, and if so, what is it?  What is the relationship between trial size, a trial-size invariant measure of reliability and the ability to localize correlations?  Hierarchical models provide a clear insight into these questions, and that is why thinking about them both before and after analysis is important, even if they are not convenient or possible in a given context.
+
+# Reliability as Signal-To-Noise Ratios
+
+To answer the above questions, we start with a simple hierarchical model of trial noise in a  task.^[Following convention,  we distinguish between *sample* and *true* quantities.  A sample quantity, say the sample mean, is observed and is affected by noise.  A true quantity, say a true mean, exists in a large-sample limit and without noise.  Sample quantities are statistics; true quantities are parameters.  Following convention, we use Latin Letters for sample quantities, e.g., ($\bar{Y}$), and Greek letters for true quantities, e.g., $\mu$.]  Suppose $I$ people each run $L$ trials in congruent and incongruent conditions.  Let $i$ denote people, $k$ denote conditions, and $\ell$ denote replicate trials.  Response times on trials serve as observations and are denoted $Y_{ik\ell}$.  Consider the model $Y_{ik\ell} = \alpha_i +x_k\theta_i+\epsilon_{ik\ell}$, where $x_k$ contrast codes condition and is -1/2 and 1/2 for congruent and incongruent conditions respectively.  Parameter $\alpha_i$ is the true overall speed of the $i$th participant.  Parameter $\theta_i$ is the true difference between incongruent and congruent conditions---it is the $i$th participant's true Stroop effect and the main target of analysis.  The error term is $\epsilon_{ik\ell} \sim \mbox{Normal}(0,\sigma^2)$, with $\sigma^2$ describing the variability of trial noise.  It is convenient to represent the model in random variable notion: $Y_{ik\ell} \sim \mbox{Normal}(\alpha_i +x_k\theta_i,\sigma^2)$. The remaining critical specification is on $\theta_i$, the true Stroop effect.  Because each $\theta_i$ describes a latent attribute of a person, it is reasonable to treat it as random effect: $\theta_i \sim \mbox{Normal}(\nu,\delta^2)$ where $\nu$ and $\delta^2$ describe the population mean and variance.  This last step makes the model hierarchical as variability across trials ($\sigma^2$) and across people ($\delta^2$) are modeled separately.
+
+Most researcher do not start from 
+Researchers who perform the usual analysis (Fig. \ref{fig:usual}) compute sample means for each person for each condition, denoted $\bar{Y}_{ik}$.  Next, for each person, the congruent sample mean is subtracted from the incongruent sample mean to form a Stroop score, denoted $d_i$, $d_i=\bar{Y}_{i2}-\bar{Y}_{i1}$.  It may seem that the sample mean and sample variance of these scores can be used to recover population means and variances.  This, unfortunately, is not so, and stands at the root of poor performance with correlating individual differences in common cognitive-control tasks.  According to the above model, the distribution of $d_i$ is 
+\[d_i \sim \mbox{Normal}(\nu,\delta^2+2\sigma^2/L).\]  
+The mean of scores, $\bar{d}$ estimates the population mean, but the variance of these scores does *not* estimate $\delta^2$, the population variance.  Instead, there is an additional component from variability across trials, $2\sigma^2/L$.  It is this inflation of sample variance from trial noise that negatively influences reliability and correlation coefficients [@Spearman.1904a].  What follows is how this negative influence occurs and what may be done to mitigate it.
+
+Consider a test-retest reliability paradigm and let $j=1,2$ denote the day of data collection.  Assuming everything remains constant except the trial noise, the test-retest model is $Y_{ijk\ell} \sim \mbox{Normal}(\alpha_i +x_k\theta_i,\sigma^2)$.  The distribution of Stroop effects for both days has common variability from $\delta^2$ and unique variability from $2\sigma^2/L$:
+\begin{eq} \label{effectDist}
+\begin{bmatrix}
+d_{i1}\\ d_{i2}
+\end{bmatrix}
+\sim \mbox{N}_2\left(
+\begin{bmatrix}\nu\\ \nu\end{bmatrix},
+\begin{bmatrix} \delta^2+2\sigma^2/L & \delta^2\\ \delta^2 & \delta^2+ 2\sigma^2/L\end{bmatrix}\right),
+\end{eq}
+
+The test-retest reliability coefficient, $r$, is the sample correlation coefficient between individuals' Stroop scores across days.  From (\ref{effectDist}), the true correlation is $\delta^2/(\delta^2+2\sigma^2/L)$.   The sample test-retest coefficient $r$, therefore, *is estimating*  $\delta^2/(\delta^2+2\sigma^2/L)$, that is, the expected value or average of $r$ across many such experiments is $\E(r) \approx \delta^2/(\delta^2+2\sigma^2/L)$.^[Sample correlations are not unbiased.  For finite numbers of people, the exact equality does not hold, but with reasonable sized samples, the bias is reasonably small.  In most individual-difference applications, researchers use relatively large numbers of people such that $\E(r)$ well approximates its limit.]  Sample reliability is a function of both trial-noise, between-participant variability, and trial size.  As trial size increases, reliability to increases.  The variability between-participants and within-trials determines the rate of increase.
+
+What parts of reliability are invariant to trial size?  Consider the ratio $\delta^2/\sigma^2$.  This is a signal-to-noise variance ratio---it is how much more variable people are relative to trial noise.   Let $\gamma^2$ denote this ratio.  
+With it, the reliability coefficient follows: 
+\[
+\E(r)\approx\frac{\gamma^2}{\gamma^2+2/L}.
+\]
+The parameter $\gamma^2$ serves as an effect-size measure of the reliability of the task.^[The signal-to-noise variance ratio $\gamma^2$, though an effect size, is quite different from more traditional effect size measures of $\eta^2$ or $\omega^2$.  Effect size measure $\eta^2$ and $\omega^2$ are normalized by a total variance and are bounded above by 1.0.  Measure $\gamma^2$, on the other hand, is closer to $F$ in meaning, but unlike $F$, is not dependent on sample sizes.  Measure $\gamma^2$ is called $g$ in Bayesian statistics [@Zellner.1986;@Zellner.Siow.1980], and it plays a pivotal role of effect size in Bayesian analysis of linear and mixed-linear models [@Liang.etal.2008;@Rouder.etal.2012].  We call this measure $\gamma^2$ rather than $g$ because it is a parameter and not an observable.]  Tasks with high values of $\gamma^2$ have variability across people that is greater than trial noise, and localizing individuals' effects may be done with just a small trial size.  Tasks with low values of $\gamma^2$ are difficult.  It is hard to localize individuals' effects even with many trials, and recovering latent covariation across such tasks remains intractable in experiments with reasonable trial size.  The parameter $\gamma=\sqrt{\gamma^2}$ is the signal-to-noise standard-deviation ratio.  It is often convenient for communication as standard deviations are sometimes more convenient than variance in communication.
+
+Figure \ref{fig:rel} shows how signal-to-noise standard-deviation ratio $\gamma$ and trial size affect the reliability coefficients.  Large reliability coefficients can be achieved in a few trials for $\gamma>1$; and somewhat high values can even be achieved in under $L=100$ trials for $\gamma>.25$.  But tasks with lower signal-to-noise ratios may not be feasible as they require hundreds or thousands replicates per person per condition.  The horizontal lines in Fig. \ref{fig:rel} may be used for planning.  They show the trial sizes needed for reliability at criterial levels of .7 and .9.  The problem then is to know what $\gamma$ to use in planning experiments.  We address this consideration subsequently.
+
+
+```{r rel,fig.cap="The expected value of reliability coefficients as a function of trial size for various signal-to-noise-standard-deviation ratios $\\gamma$.  Horizontal lines at .7 and .9 can be used to plan the trial size for tasks with difference scores."}
+
+rel=function(g,L) g^2/(g^2+2/L)
+
+par(mgp=c(2,1,0))
+n1=1:9
+n2=0:2
+n=c(as.vector(outer(n1,n2,function(x,y){x*10^y})),1000)
+gamma=c(2,1,.5,.2,.1)
+R=outer(gamma,n,rel)
+majors=0:3
+matplot(log10(n),t(R),typ='l',lty=1,axes=F,lwd=2,
+        xlab="Trial Size (L)",ylab="Reliabilty Coefficient")
+axis(2)
+axis(1,at=majors,lab=10^majors)
+axis(1,at=log10(n),lab=NA)
+box()
+legend(x=2.6,y=.57,legend=gamma,fill=1:length(gamma),
+       title=expression(gamma),bg='white')
+abline(h=c(.7,.9),lty=2)
+```
+
+It is useful to see how trial size and signal-to-noise ratio affect correlation.  Suppose we have two tasks, and let $j$ indicate the task. Consider the model $Y_{ijk\ell} \sim \mbox{Normal}(\alpha_{ij}+x_k\theta_{ij},\sigma^2_j)$, where there is true correlation, $\rho$ across the tasks:
+\[
+\begin{bmatrix}
+\theta_{i1}\\ \theta_{i2}
+\end{bmatrix}
+\sim \mbox{N}_2\left(
+\begin{bmatrix}\nu_1\\ \nu_2\end{bmatrix},
+\begin{bmatrix} \delta_1^2 & \rho\delta_1\delta_2\\\rho\delta_1\delta_2 & \delta_2^2\end{bmatrix}\right),
+\]
+The correlation between observed effects is
+\[
+\begin{bmatrix}
+d_{i1}\\ d_{i2}
+\end{bmatrix}
+\sim \mbox{N}_2\left(
+\begin{bmatrix}\nu_1\\ \nu_2\end{bmatrix},
+\begin{bmatrix} \delta_1^2+2\sigma^2_1/L_1 & \rho\delta_1\delta_2\\\rho\delta_1\delta_2 & \delta_2^2+2\sigma^2_2/L_2\end{bmatrix}\right),
+\]
+where $L_1$ and $L_2$ are the trial sizes for the two tasks.  The sample correlation, $r$, estimates:
+\[
+\E(r) \approx \rho \left[\frac{\delta_1\delta_2}{\sqrt{(\delta_1^2+2\sigma^2_1/L_1)(\delta_2^2+2\sigma_2^2/L_2)}}\right] =
+\rho \left[ \frac{\eta_1\eta_2}{\sqrt{(\eta_1^2+2/L_1)(\eta_2^2+2/L_2)}}\right].
+\]
+Hence, the sample correlation is attenuated, and the amount of attenuation depends both on the signal-to-noise variance ratio and the trial size. Often, if $\gamma^2_1$ and $\gamma^2_2$ are small, this attenuation is extreme even for reasonable trial sizes. 
+
+# The Consequences of Low and High Signal-To-Noise In Practice
+
+
+
+
+```{r,message=F}
+if (runRM){
+  source('newModLib.R')
+  stroop <- readRMStroopI()
+  flank <- readRMFlankI()
+  task=rep(1:2,c(length(stroop$sub),length(flank$sub)))
+  dat <-rbind(stroop,flank)
+  dat$task <-task
+  ssub <- unique(stroop$sub)
+  fsub <- unique(flank$sub)
+  goodSub <- intersect(ssub,fsub)
+  datRM <- dat[dat$sub %in% goodSub,]
+  outFlank=est1(datRM[datRM$task==2,],M=3000,burn=200,tune=.16)
+  outStroop=est1(datRM[datRM$task==1,],M=3000,burn=200,tune=.16)
+  outRM2=est2(datRM,M=3000,burn=200,tune=.03)
+  save(outFlank,outStroop,outRM2,datRM,file="RM.RData")
+  }
+if (!runRM) {load("RM.RData")}
+
+if (runIllusion){
+  datIll <- readIllusion()
+  datIll$task = as.integer(as.factor(datIll$task)) 
+  #ml=1,pog=2
+  datIll$y= ifelse(datIll$task==1,-datIll$bias*100,datIll$bias)
+  outML=est3(datIll[datIll$task==1,],M=3000,burn=200,tune=1)
+  outPog=est3(datIll[datIll$task==2,],M=3000,burn=200,tune=1)
+  outIll2=est4(datIll,M=3000,burn=200,tune=1)
+  save(outML,outPog,outIll2,datIll,file="Illusion.RData")
+  }
+if (!runIllusion) {load("Illusion.RData")}
+```
+
+
+
+
+```{R reg,fig.cap="A-B. Observed effects ($d_i$, dashed line) and model-based estimates ($\\theta_i$, solid line) for Rey Mermet et al.'s (2018) Stroop and flanker tasks.  The shaded area shows the 95% credible interval for model-based effects. The signal-to-noise ratio $\\gamma$ is low indicating much trial noise.  C. Posterior distribution of model-based correlation ($\\rho$) between Stroop and flanker effects. The dashed lines denote the 95% credible interval.  The point and segments above the distribution show the observed corrlelation coefficient and associated 95% CI. D-E.  Analogous plots for the Mueller-Lyar and Poggendorf illusions F.  Anaologous plot for the correlation between Mueller-Lyar and Poggendorf effects."}
+source('aux.R')
+par(mfrow=c(2,3),mgp=c(2,1,0),mar=c(3,3,1,1),cex=.9)
+stroopGamma=plot.eff(outStroop,datRM[datRM$task==1,],runner="A. Stroop")
+flankGamma=plot.eff(outFlank,datRM[datRM$task==2,],runner="B. Flanker")
+rmCor=plot.cor(out=outRM2,dat=datRM,runner="C.")
+mlGamma=plot.meas(outML,datIll[datIll$task==1,],runner="D. M-L")
+pogGamma=plot.meas(outPog,datIll[datIll$task==2,],runner="E. Poggendorf")
+credIll=plot.cor(out=outIll2,dat=datIll,runner="F.")
+```
+
+
+To show the consequences of low and high signal-to-noise ratios, we analyze data from a cognitive-control battery and a visual-illusions battery.  For each battery, we followed two analysis pathways.  One is the usual pathway (Fig \ref{fig:usual}) in which the analysis starts from person-by-task sample effects, and observed correlations among these are the targets.  The other pathway is model-based.  Here we fit the simple hierarchical model that models trial noise along with participant noise.  The hierarchical model may be analyzed by both frequentist [mixed-linear effect models, @Pinheiro.Bates.2000] and Bayesian [@Gelman.etal.2004] methods, and we chose the latter for convenience.
+
+## Cognitive control
+
+The cognitive-control tasks come from @Rey-Mermet.etal.2018, who had young and elderly participants perform a large battery.  We highlight data from a number-Stroop task and a letter-flanker task.  Fig. \ref{fig:reg}A shows the model analysis from the Stroop task.  Plotted are observed effects $d_i$ and model estimates of $\theta_i$.  Here, the two estimators differ, and the model estimators are far more compact or regularized than the corresponding sample effects.  
+Some readers will see regularization as a drawback as it compresses individual differences.  This view is unwise.  The large degree of regularization means that the apparent individual differences in sample effects are due to trial noise and are unreplicable.  Fig. \ref{fig:reg}A shows the model estimate of  $\gamma$ ($\hat{\gamma}=$ 
+`r round(stroopGamma$modGamma,3)`), and the number of trials ($L=93$).  Even though there is a relatively large number of trials per person per condition and a large number of participants, the low signal-to-noise ratio implies that it is difficult to localize individual differences or recover any latent structure.   Figure \ref{fig:reg}B shows the same for the flanker task; the signal-to-noise ratio is even lower than that for the Stroop task.
+
+```{r}
+factor1=rmCor[1,3]/rmCor[2,3]
+factor2=(rmCor[1,2]-rmCor[1,1])/(rmCor[2,2]-rmCor[2,1])
+```
+
+Figure \ref{fig:reg}C shows the correlation among tasks.  The observed correlation and associated 95\% CI is shown as a large dot and horizontal line near the top of the distribution.  The correlation value is known to be attenuated, and the relatively narrow CI reflects the large number of participants without consideration of trial noise.  Unfortunately, this high degree of confidence is misplaced.  The posterior distribution of $\rho$ from the hierarchical model is plotted  along with 95% credible intervals.  The uncertainty from low signal-to-noise ratios in the tasks is reflected in the large degree of uncertainty in correlation.  Of note, the observed correlation, `r printnum(rmCor[2,3],digits=3)` is attenuated by a factor of `r round(factor1,2)` compared to the hierarchical estimate of `r printnum(rmCor[1,3],digits=3)`.  Moreover, the CI for the observed correlation is `r printnum(100/factor2,digits=0)`% that of the credible interval from the hierarchical estimate showing much confidence in an attenuated value.  In summary, low signal-to-noise ratios result in much uncertainty when trial noise is considered and much overconfidence in an attenuated value when trial noise is ignored.  It is not a good situation.
+
+
+## Visual Illusions
+
+The bottom row of Figure \ref{fig:reg} shows a much more sanguine case.  The data are from a pilot study on visual illusions gathered by the authors and Michael S. Pratte.  The paradigm for the illusions is shown in Figure \ref{fig:ill}.  For the Muelller-Lyar paradigm, participants adjusted a center arrow so that it bisects the horizontal line.  Participants' tendency here is to set the center arrow too far to the left, and we coded that as a positive bias.  For the Poggendorf paradigm, participants adjusted the vertical offset of the right segment so that it lined up with the extension of the left segment through the occluded region.  Participants' tendency is to set this segment too far down, and we coded this as a positive bias.  A total of 100 individuals from Prolific ran 15 trials in each illusion; of these 100, 7 were discarded for producing uninterpretable data.^[The illusion paradigm does not rely on a contrast between conditions.  As a result, the reliability correlation is $\E(r)\approx\gamma^2/(\gamma^2+1/L)$.]
+
+The resulting biases in perception are shown in Figure\ref{fig:reg}D-E.  As can be seen, illusion tasks yield quite high signal-to-noise ratios.  These high-ratio agree well with @Cretenoud.etal.2021, who studied individual differences in Mueller-Lyar, Ebbinghaus, and Ponzo illusions.  With high signal-to-noise ratios, there is little regularization and  sample mean estimates match hierarchical estimates even with the limited number of trials.  Moreover, with high signal-to-noise ratios, observed and model correlations match in both value and uncertainty (Fig. \ref{fig:reg}F).  In this case, because trial noise is small relative to individual variation, the uncertainty in correlation reflects the moderate number of people rather than the limited number of trials.
+
+```{r ill, fig.cap="Paradigms for assessing visual illusions.  Left: For the Muelller-Lyar paradigm, participants adjusted a center arrow so that it bisects the horizontal line.  Right: For the Poggendorf illusion, participants adjusted the vertical offset of the right segment so that it lined up with the extension of the left segment through the occluded region."}
+makePiFig()
+```
+
+
+
+# Quick Calcuations of Signal-To-Noise Ratios
+
+Although we estimated signal-to-noise ratios in the context of a Bayesian hierarchical model, it is possible to derive straightforward formula for these ratios without performing any model analysis.  The case is similar to Spearman's derivation of the formula for disattenuating correlations.  Spearman's formula is based on a similar hierarchical and one does not have to perform a hierarchical model analysis to use it.
+
+Recall that for a single task, the sample effect, $d_i$, is distributed as $d_i\sim \mbox{Normal}(\nu,2\sigma^2/L+\delta^2)$.  Hence, the usual sample variance has an expectation of 
+$\mbox{E}[\mbox{Var}(d)]=2\sigma^2/L+\delta^2$.  Substituting in $\gamma^2$ yields, $\mbox{E}[\mbox{Var}(d)]=\sigma^2(2/L+\gamma^2)$.  Rearranging yields the following moments-based estimator of $\gamma^2$:
+\begin{eq} \label{sampGammaTask}
+\hat{\gamma}^2 = \frac{\mbox{Var}(d)}{\hat{\sigma}^2}-\frac{2}{L},
+\end{eq}
+where $\mbox{Var}(d)$ is the sample variance, $\sum_i (d_i-\bar{d})^2/(I-1)$, and $\hat{\sigma}^2$ is the MSE given by $\sum_{ijk} (Y_{ijk}-\bar{Y}_{ij})^2/(IJ(K-1))$.  For measures without contrasts, the analogous formula is 
+\begin{eq} \label{sampleGammaMeas}
+\hat{\gamma}^2 = \frac{\mbox{Var}(d)}{\hat{\sigma}^2}-\frac{1}{L},
+\end{eq}
+We call estimates from (\ref{sampGammaTask}) and (\ref{sampleGammaMeas}) the sample estimates to distinguish them from model-based estimates.
+
+Sample estimates of $\gamma$ are, respectively, `r round(stroopGamma$obsGamma,3)`, and `r round(flankGamma$obsGamm,3)` for the Stroop and flanker tasks, and, respectively, `r round(mlGamma$obsGamma,3)`, and `r round(pogGamma$obsGamm,3)`, for the Mueller-Lyar and Poggendorf illusions.  These values are very close to the model-based ones in Figure \ref{fig:reg}.
+
+There is a potential issue with sample estimates.  There is no guarantee that $\hat{\gamma}^2$ is positive.  The situation is analogous to that with Spearman's disattenuation formula.  In Spearman's case, the disattenuated correlations were not guaranteed to be real numbers, and even when they were, they were not guaranteed to be in the [-1,1] interval.  When these violations occurred, it indicated that the design was underpowered for the low-level of true reliability, and that the disattenuation was fraught with uncertainty.  In our case, negative values of $\hat{\gamma}^2$ too means that the design is underpowered for the low-level of true signal-to-noise ratio.  The main advantages of Bayesian-model estimators in comparison are two-fold.  First, resulting estimates are always in the valid range (between -1 and 1 for correlation; positive for $\gamma^2$).  Second, estimates of correlation and signal-to-noise ratios come with uncertainties such as those in Figure \ref{fig:reg}.
+
+# Signal-To-Noise Ratios In A Few Tasks and Measures
+
+The critical quantity for planning experiments and understanding the ability to localize correlations is $\gamma$, the signal-to-noise  ratios.  What are the values for a range of tasks?  Table~ provides some guidance
+
+```{r}
+source('aux.R')
+y=makeArmyWeight()
+```
+
+
+
+```{r allTasks,message=F}
+if(needTab){
+  makeTab()
+}
+tab = readRDS("table.RDS")
+publishTab(tab)
+```
+
+The first row is for weight.  We used the Army's 2011 survey of 6068 soldiers' weights. The mean and standard deviation are `r round(mean(y),1)` lbs and `r round(sd(y),1)` lbs,  respectively.  How variable are weight measurements?  Modern human body scales may be accurate to half a pound or less, but some variation is expected for how the participant is balanced and recent food intake or exercise.  Let's assume that a repeat measurement taken at some point in the same day might have a standard deviation of 3 lbs.  This is a small amount relative to the variation across participants yielding an estimate of $\gamma =$ `r round(sd(y)/3,2)`.  Weight is a best-case scenario, by far. The range of human weights compared to the accuracy of scales is indeed quite large.
+
+The remainder of the rows come from the few tasks presented here plus one additional lexical distance task from @Rouder.etal.2005.  The next rows are for the Rey-Mermet et al. Stroop task, and Row 2 shows the signal-to-noise ratio for the Stroop effect.  As has been noted previously, the signal-to-noise ratio is low for the contrast between congruent and incongruent conditions.  In the following row, Row 3, is for the average or overall speed.^[The model is $Y_{ik\ell} \sim \mbox{N}(\alpha_i+x_k\theta_i,\sigma^2)$ where both $\alpha_i$ (speed) and $\theta_i$ (effect) are treated as random effects: $\alpha_i \sim \mbox{N}(\nu_\alpha,\gamma^2_\alpha\sigma^2)$ and $\theta_i \sim \mbox{N}(\nu_\theta,\gamma^2_\theta\sigma^2)$.  Posterior means of $\gamma_\theta$ and $\gamma_\alpha$ are shown in Table~\ref{tab:allTasks} for rows labeled *Effect* and *Speed*, respectively.]  Here, the signal-to-noise ratio is great, that is, the variability in participants in overall speed is large relative to trial noise.  Hence, only 10s of trials per person are needed to localize individual differences in speed.  
+
+There is one new task, lexical distance, which is an implementation of the distance-from-five effect [@Moyer.Landauer.1967].  Participants classified digits as either less-than or greater-than five, and did so more quickly if the digit was far from five (digits 2 and 8) than close to five (digits 4 and 6).  The contrast row is for the contrast between near and far digits; the speed row is for the overall speed.  As with cognitive-control tasks, the signal-to-noise is much greater for localizing individual overall speed effects than for localizing individual distance-from-five effects.
+
+
+
+# The Reliability Crisis Revisited
+
+In this paper, we provide a novel reliability measure for experimental tasks.  Unlike the common reliability coefficient, this measure is not dependent on trial size.  The measure is a signal-to-noise variance ratio, denoted $\gamma^2$.  With it, researchers can communicate clearly about reliability without recourse to trial size.  Signal-to-noise ratios succinctly indicate how well individual differences may be localized and how well the structure of covariation of individual differences across tasks may be recovered.
+
+The motivation for the signal-to-noise ratio comes from a hierarchical treatment of variation across people, conditions, and trials.  Even so, researchers need not analyze data with hierarchical models to use signal-to-noise ratios in planning experiments or interpreting results.  We provide an easy-to-use estimator based on ordinary sample statistics.  With it, signal-to-noise ratios may be used to characterize the reliability of tasks and to understand whether small correlation values reflect true structure or excessive trial noise.  The advantage of hierarchical models is that they provide measures of uncertainty on correlations across tasks.
+
+The cause of the reliability crisis is that researchers tend to use too few trials in tasks with too low signal-to-noise ratios.  One obvious solution is to use more trials.  For example, the correlation between Stroop and flanker can be well localized with $L=500$ trials per person per condition.  The problem with this obvious solution is that increasing trial size is often unrealistic or inconvenient.  Some of the drawbacks to great numbers of trials are that fewer tasks may be run in a battery, conflict effects may attenuate with practice, and people may fatigue or even withdraw.  Our motivation for avoiding excessive trial sizes is that we feel bad seeing our participants suffer through so much boredom.
+
+There are other proposed solutions to the reliability crisis that are not as draconian as implementing excessive trial sizes.  These include avoiding difference scores [@Draheim.etal.2019], gamification [@Kucina.etal.2022;@Deveau.etal.2015], and diffusion modeling [@Haines.etal.2020;@Lerche.etal.2020;@vonKrause.etal.2020;@Weigard.etal.2021].  Understanding the concept of task signal-to-noise helps in part to evaluate these proposals.  
+
+## Avoiding Difference Scores 
+
+@Draheim.etal.2019 recommends avoiding difference scores as raw input to latent variable analyses.  Instead, they recommend using overall performance, for example, the average Stroop accuracy (in a difficult task) rather than the difference between conditions.  We think there is much wisdom to this recommendation as signal-to-noise ratios are much higher for overall performance than for effects (see Table \ref{tab:allTasks}).  Researchers who take this approach can use signal-to-noise ratios to plan their trial sizes.  We suspect that the needed trial sizes will be delightfully small, and the ability to have quick and agile experiments may make the exploration of individual differences more tractable.  
+
+Nonetheless, this recommendation, while methodologically sound, comes with drawbacks.  Difference scores are not at the root of the problem.  In fact, our model reveals the same problems of low signal-to-noise for Stroop effects even though at no point were means subtracted.  The issue is with experimental control.  In a Stroop task, the contrast between congruent and incongruent is used to control nuisance factors such as overall processing speed, motivation, or conscientiousness.  By focusing on the contrast, these nuisance factors are controlled, and the difference reflects only processes that systematically vary across conditions, such as the need for cognitive control.  Performance measures that do not involve this contrast are assuredly confounded by nuisance factors.   And individual differences in them may arise from individual differences in these nuisance factors rather than in cognitive control.  We implore researchers who use overall performance scores or other measures without contrasts to be duly cautious in their interpretations about the theoretical source of individual differences.
+
+## Gamification 
+
+One innovation in cognitive control is the use of so-called *gamified* tasks [@Kucina.etal.2022;@Deveau.etal.2015;@Wells.etal.2021].  When a task is gamified, it is made into a video game.  There may be sound, color, theme music, point scores, leaderboards, and other elements of video-game play.  There are two possible advantages of gamification.  The first is that gamified tasks may be more reliable in that they have higher signal-to-noise ratios, $\gamma^2$ [@Kucina.etal.2022;@Wells.etal.2021].  For example, @Wells.etal.2021 claim that the increased arousal and engagement from gamification results in more reliable data.  @Kucina.etal.2022 note that it may be possible to have combined stimulus elements in gamified settings that increase conflict effects.  The second possible advantage is that people may be willing to engage with a gamified task at a higher level for longer [@Deveau.etal.2015].  Gamification then may be an effective tactic for increasing trial size without tears. 
+
+The development here provides an ideal language to assess whether gamification results in more reliable tasks.  Any gain in reliability (as measured by a reliability coefficient) may be factored into that from increased trials and that from increased signal-to-noise ratios.
+
+## Diffusion-model analysis
+
+The study of individual differences is inherently a psychometric or measurement endeavor.  A relatively new approach is cognitive psychometrics [@Batchelder.2010] where plausible models of cognitive processes are used to improve the measurement of cognitive abilities.  An advantage here is in interpretation---the target of inference is individual differences in theoretically meaningful cognitive processes as specified by explicit models.  The most successful of these is Ratcliff's diffusion model of perception [@Ratcliff.1978].  The latent parameter *drift rate* captures the rate of information accumulation in a cognitive task.  Diffusion models have been used to understand individual differences in aging [@Ratcliff.etal.2001], psychopathology [@White.etal.2010], and cognitive control [@Weigard.etal.2021].  Moreover, Bayesian hierarchical models are convenient [@Vandekerckhove.etal.2011], and such, hierarchical regularzation in low-reliability tasks is possible.   JEFF CITES.
+
+
+One intriguing claim is that the individual differences in drift rate are more precisely located than individual differences in speed or accuracy alone [@Lerche.etal.2020;@Weigard.etal.2021].  The claim is controversial as @Enkavi.etal.2019 found only marginally higher reliability coefficients for drift rates vs. RT alone.  Even if the diffusion model parameters better locate individual differences, it is not clear that this potential improvement is sufficient for adequate localization in low-reliability tasks such as Stroop or flanker.
+
+## Concluding Thoughts
+
+Where are there large individual differences in cognition?  The question can more precisely be asked---what tasks or instruments have high signal-to-noise ratios, $\gamma$?  Let's call these high-signal instruments, and examples of high-signal instruments include overall speed and biases in visual illusions.  We advocate a prioritization of high-signal instruments even at the expense of more traditional instruments such as Stroop, flanker and Simon task effects.  Even without these low-signal instruments, there is a rich cognitive worldthat can be explored fruitfully with individual differences. For example, what is the factor structure of overall speed across a wide range of tasks?  Is there a general-susceptibility-to-illusions factor?  We hope the development here provides the formal background for identifying high-signal instruments with cognitive tasks and speeds up this more fruitful exploration.
+
+
+\newpage
+
+# References
+
