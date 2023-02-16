@@ -1,0 +1,18 @@
+
+ model{
+  for (n in 1:N) {
+   y[n]~dnorm(alpha[sub[n],task[n]]+(x[n]*theta[sub[n],task[n]]),
+          pSig[task[n]])}
+  for (i in 1:I){
+    for (j in 1:J){
+      alpha[i,j]~dnorm(mu,1)}}
+  for (i in 1:I){
+    theta[i,(1:J)]~dmnorm(nu,B)}
+  mu~dnorm(1,1)
+  for (j in 1:J){
+    pSig[j]~dgamma(.5,.5)
+    sig2[j] <- 1/pSig[j]
+    sigma[j] <- sqrt(sig2[j])
+    nu[j]~dnorm(.07,1/.1^2)}
+  B~dwish(W,J+1)
+  }
