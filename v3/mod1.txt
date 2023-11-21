@@ -1,0 +1,12 @@
+
+ model{
+  for (n in 1:N) {
+   y[n]~dnorm(alpha[sub[n]]+x[n]*theta[sub[n]],pSigma)}
+  for (i in 1:I){
+    alpha[i]~dnorm(mu,1)
+    theta[i]~dnorm(nu,pSigma*pGamma)}
+  mu~dnorm(1,1)
+  pSigma~dgamma(.5,.5)
+  nu~dnorm(.07,1/.1^2)
+  pGamma~dgamma(.5,.5*tune^2)
+  }

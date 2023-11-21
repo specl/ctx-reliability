@@ -1,0 +1,26 @@
+\begin{figure*}[hbt]
+\ifnextchar[{\eatarg}{}
+
+\includegraphics[width=5in]{dataAnalysis} \caption{Usual analysis: The raw data are tabulated into individual scores (A). The covariation among these individual scores may be computed (B).  These covariances are decomposed with structural equation models (C).}\label{fig:usual}
+\end{figure*}
+\begin{figure*}[hbt]
+\ifnextchar[{\eatarg}{}
+
+\centering
+\includegraphics{p_files/figure-latex/rel-1.pdf}
+\caption{\label{fig:rel}Reliability coefficients as a function of trial size for various signal-to-noise-standard-deviation ratios \(\gamma\). Horizontal lines at .7 and .9 can be used to plan the trial size for tasks with contrasts across conditions such as the Stroop task.}
+\end{figure*}
+\begin{figure*}[hbt]
+\ifnextchar[{\eatarg}{}
+
+\centering
+\includegraphics{p_files/figure-latex/reg-1.pdf}
+\caption{\label{fig:reg}A-B. Observed effects (\(d_i\), dashed line) and model-based estimates (\(\theta_i\), solid line) for Rey Mermet et al.'s (2018) Stroop and flanker tasks. The shaded area shows the 95\% credible interval for model-based effects. The signal-to-noise ratio \(\gamma\) is low indicating considerable trial noise. C. Posterior distribution of model-based correlation (\(\rho\)) between Stroop and flanker effects. The dashed lines denote the 95\% credible interval. The point and segments above the distribution show the observed corrlelation coefficient and associated 95\% CI. D-E. Analogous plots for the Mueller-Lyer and Poggendorf illusions F. Anaologous plot for the correlation between Mueller-Lyer and Poggendorf effects.}
+\end{figure*}
+\begin{figure*}[hbt]
+\ifnextchar[{\eatarg}{}
+
+\centering
+\includegraphics{p_files/figure-latex/ill-1.pdf}
+\caption{\label{fig:ill}Paradigms for assessing visual illusions. Left: For the Muelller-Lyer paradigm, participants adjusted a center arrow so that it bisects the horizontal line. Right: For the Poggendorf illusion, participants adjusted the vertical offset of the right segment so that it lined up with the extension of the left segment through the occluded region.}
+\end{figure*}
